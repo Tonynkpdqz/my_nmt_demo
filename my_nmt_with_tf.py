@@ -13,11 +13,8 @@ import os
 import io
 import time
 
-path_to_zip = tf.contrib.keras.utils.get_file(
-    'spa-eng.zip', origin='http://storage.googleapis.com/download.tensorflow.org/data/spa-eng.zip',
-    extract=True)
 
-path_to_file = os.path.dirname(path_to_zip) + "/spa-eng/spa.txt"
+path_to_file = "new_spa"
 print(path_to_file)
 
 
@@ -392,18 +389,37 @@ def plot_attention(attention, sentence, predicted_sentence):
 
     plt.show()
 
+from nltk.translate.bleu_score import sentence_bleu
 
-import bleu_utils
+def get_references_and_candidate(filename, rows_length):
+    list_all = []
+    with open(filename, 'r', encoding='utf-8') as f:
+        for i in range(0, rows_length):
+            line = f.readline().rstrip()
+            line_arr = line.split('	')
+            in_list = [line_arr[0], line_arr[1]]
+            list_all.append(in_list)
+        return list_all
 
-
-def cal_sum_bleu():
-    score = 0
-    list_all = bleu_utils.get_references_and_candidate('new_spa', 30000)
-    for i in range(30000):
-        score += bleu_utils.cal_bleu(list_all[i][0], list_all[i][1])
-    score /= 30000
+def cal_bleu(reference, candidate):
+    ref_arr = reference.split(' ')
+    can_arr = candidate.split(' ')
+    score = sentence_bleu([ref_arr], can_arr)
     return score
 
+def cal_sum_bleu(filename,startnum,endnum):
+    score = 0
+    list_all = get_references_and_candidate(filename,endnum)
+    for i in range(startnum,endnum):
+        result, sentence, attention_plot = evaluate(list_all[i][1])
+        res = result[:-9]+result[-8]
+        score_now = cal_bleu(list_all[i][0].replace("'", " ").upper(),res.upper())
+        score += score_now
+        if(i%100 == 0):
+          print(list_all[i][0] + ' ---- ' +res)
+          print(score_now)
+    score /= endnum-startnum
+    return score
 
 def translate(sentence):
     result, sentence, attention_plot = evaluate(sentence)
@@ -414,8 +430,10 @@ def translate(sentence):
     attention_plot = attention_plot[:len(result.split(' ')), :len(sentence.split(' '))]
     plot_attention(attention_plot, sentence.split(' '), result.split(' '))
 
-
 # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
 checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-cal_sum_bleu()
-translate(u'La puerta estaba con llave y no pudimos entrar.')
+
+score = cal_sum_bleu('/root/.keras/datasets/spa-eng/spa.txt',20000,25000)
+print("bleu score=")
+print(score)
+translate(u'Ésta es su casa.')

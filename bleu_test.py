@@ -5,10 +5,13 @@ def cal_bleu(reference, candidate):
     can_arr = candidate.split(' ')
     score = sentence_bleu([ref_arr], can_arr)
     return score
-reference = 'this is test'
-candidate = 'this is a test'
+reference = "I don't like movies.".replace("'", " ").upper()
+candidate = "i don t like movies . <end> ".upper()
+can = candidate[:-9]+candidate[-8]
+print(reference)
+print(can)
 #score = sentence_bleu(reference, candidate)
 #score = corpus_bleu(reference,candidate)
-score = cal_bleu(reference, candidate)
+score = cal_bleu(reference, can)
 
 print(score)

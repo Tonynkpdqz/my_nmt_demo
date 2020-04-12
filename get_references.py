@@ -1,6 +1,8 @@
 import os
 
 
+list_all = [['1','3'],['2']]
+print(list_all[1][0] + list_all[0][1])
 def get_references_and_candidate(filename,rows_length):
     list_all = [[]]
     with open(filename, 'r', encoding='utf-8') as f:
